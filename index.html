@@ -1,0 +1,214 @@
+<!doctype html>
+<html>
+<head>
+	<title>Mine Sweeper</title>
+	<link rel="stylesheet" href="css/main.css">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">  
+</head>
+<body class="container-fluid">
+	<header>
+		<h1>Mine Sweeper</h1>
+	</header> 
+	<main class="row">
+		<div class="col-lg-2 col-md-2 col-sm-12 col-xs-12"><div onclick="flags()" class="flag_button">Flags</div></div>
+		<div class="col-lg-8 col-md-8 col-sm-12 col-xs-12">
+			<table>
+				<thead></thead>
+				<tbody id="table_body"> 
+				</tbody>
+			</table>
+			<footer><h5>&copy; 2015 Jason Yim</h5></footer>
+		</div>
+		<div class="col-lg-2 col-md-2 col-sm-12 col-xs-12"><div id="message"></div></div>
+	</main>
+	<script src="js/jquery-2.1.4.js"></script>
+	<script>  
+		var Tile = function (row, column){
+			this.contains = "";
+			this.x = column;
+			this.y = row;
+			this.checked = false;
+			this.flagged = false;
+		}  
+		var Board = function (rows, columns, mines){ 
+			this.max_rows = rows;
+			this.max_columns = columns;
+			this.max_mines = mines;
+			this.grid = [];
+			for(var a = 0; a < rows; a++){
+				var array = [];
+				$('#table_body').append("<tr></tr>");  
+				for(var b = 0; b < columns; b++){
+					var child = a+1;
+					var nth_child = '#table_body tr:nth-child('+child+')'; 
+					var td_id = "<td id='row_"+a+"_column_"+b+"'><div onclick='reveal("+a+", "+b+")' class='cover'></div></td>";
+					$(nth_child).append(td_id);
+					var tile = new Tile(a,b);
+					array.push(tile);
+				}
+				this.grid.push(array);
+			} 
+		}   
+		Board.prototype.place_mine = function(){
+			var mine_location = this.grid[Math.floor(Math.random()*this.max_rows)][Math.floor(Math.random()*this.max_columns)]; 
+			if(mine_location.contains == "M"){
+				this.place_mine();
+			}else{
+				mine_location.contains = "M";	 
+			} 
+		}
+		Board.prototype.add_mines = function(){
+			for(var c = 0; c < this.max_mines; c++){ 
+				this.place_mine();
+			} 
+		}  
+		Board.prototype.detect_surrounding = function(current_tile){ 
+			var top, top_left, top_right, left, right, bottom, bottom_left, bottom_right; 
+			var surroundings = [];
+			switch(true){
+				case(current_tile.y == 0 && current_tile.x == 0): 
+					right        = this.grid[current_tile.y  ][current_tile.x+1];
+					bottom       = this.grid[current_tile.y+1][current_tile.x  ];
+					bottom_right = this.grid[current_tile.y+1][current_tile.x+1];
+					surroundings = [right, bottom, bottom_right];
+					break;
+				case(current_tile.y == this.max_rows-1 && current_tile.x == 0):
+					top          = this.grid[current_tile.y-1][current_tile.x  ]; 
+					top_right    = this.grid[current_tile.y-1][current_tile.x+1]; 
+					right        = this.grid[current_tile.y  ][current_tile.x+1];
+				  surroundings = [top, top_right, right];
+				  break;
+				case(current_tile.y == 0 && current_tile.x == this.max_columns-1):
+					left         = this.grid[current_tile.y  ][current_tile.x-1]; 
+					bottom       = this.grid[current_tile.y+1][current_tile.x  ];
+					bottom_left  = this.grid[current_tile.y+1][current_tile.x-1];
+				  surroundings = [left, bottom_left, bottom];
+				  break;
+				case(current_tile.y == this.max_rows-1 && current_tile.x == this.max_columns-1):
+					top          = this.grid[current_tile.y-1][current_tile.x  ];
+					top_left     = this.grid[current_tile.y-1][current_tile.x-1]; 
+					left         = this.grid[current_tile.y  ][current_tile.x-1];
+				  surroundings = [top_left, top, left];
+				  break; 
+				case(current_tile.y == 0):
+					left         = this.grid[current_tile.y  ][current_tile.x-1];
+					right        = this.grid[current_tile.y  ][current_tile.x+1];
+					bottom       = this.grid[current_tile.y+1][current_tile.x  ];
+					bottom_left  = this.grid[current_tile.y+1][current_tile.x-1];
+					bottom_right = this.grid[current_tile.y+1][current_tile.x+1];
+				  surroundings = [left, right, bottom_left, bottom, bottom_right];
+				  break;
+				case(current_tile.y == this.max_rows-1):
+					top          = this.grid[current_tile.y-1][current_tile.x  ];
+					top_left     = this.grid[current_tile.y-1][current_tile.x-1];
+					top_right    = this.grid[current_tile.y-1][current_tile.x+1];
+					left         = this.grid[current_tile.y  ][current_tile.x-1];
+					right        = this.grid[current_tile.y  ][current_tile.x+1];
+				  surroundings = [left, top_left, top, top_right, right];
+				  break;
+				case(current_tile.x == 0):
+					top          = this.grid[current_tile.y-1][current_tile.x  ]; 
+					top_right    = this.grid[current_tile.y-1][current_tile.x+1]; 
+					right        = this.grid[current_tile.y  ][current_tile.x+1];
+					bottom       = this.grid[current_tile.y+1][current_tile.x  ]; 
+					bottom_right = this.grid[current_tile.y+1][current_tile.x+1];
+				  surroundings = [top, top_right, right, bottom_right, bottom];
+				  break;
+				case(current_tile.x == this.max_columns-1):
+					top          = this.grid[current_tile.y-1][current_tile.x  ];
+					top_left     = this.grid[current_tile.y-1][current_tile.x-1]; 
+					left         = this.grid[current_tile.y  ][current_tile.x-1]; 
+					bottom       = this.grid[current_tile.y+1][current_tile.x  ];
+					bottom_left  = this.grid[current_tile.y+1][current_tile.x-1]; 
+				  surroundings = [top, top_left, left, bottom_left, bottom];
+				  break;
+				default: 
+					top          = this.grid[current_tile.y-1][current_tile.x  ];
+					top_left     = this.grid[current_tile.y-1][current_tile.x-1];
+					top_right    = this.grid[current_tile.y-1][current_tile.x+1];
+					left         = this.grid[current_tile.y  ][current_tile.x-1];
+					right        = this.grid[current_tile.y  ][current_tile.x+1];
+					bottom       = this.grid[current_tile.y+1][current_tile.x  ];
+					bottom_left  = this.grid[current_tile.y+1][current_tile.x-1];
+					bottom_right = this.grid[current_tile.y+1][current_tile.x+1];
+					surroundings = [top, top_left, top_right, left, right, bottom, bottom_left, bottom_right];
+			}  
+			return surroundings; 
+		}
+		Board.prototype.mines_detected = function(surroundings){
+			var mine_count = 0;
+			for(var tile = 0; tile < surroundings.length; tile++){ 
+				if(this.grid[surroundings[tile].y][surroundings[tile].x].contains == "M"){
+					mine_count++;
+				}
+			}
+			return mine_count;
+		}
+
+		Board.prototype.add_sensors = function(){  
+			for(var row = 0; row < this.max_rows; row++){
+				for(var column = 0; column < this.max_columns; column++){
+					var current_tile = this.grid[row][column];
+					if(this.grid[row][column].contains != 'M'){ 
+						this.grid[row][column].contains = this.mines_detected(this.detect_surrounding(current_tile)); 
+					} 
+				}
+			}
+		}
+		var board = new Board(16, 16, 20); 	 
+		board.add_mines();
+		board.add_sensors(); 
+		var flags_on = false;
+		var current_tile;
+		function flags(){
+			if(flags_on){
+				flags_on = false;
+				document.getElementById('message').innerHTML = "flags off";  
+			}else{
+				flags_on = true;
+				document.getElementById('message').innerHTML = "flags on";
+			}	 
+		}
+		function reveal(row, column){
+			current_tile = board.grid[row][column];
+			if(!flags_on && current_tile.flagged){ 
+			}else if(flags_on && current_tile.flagged){ 
+				current_tile.flagged = false; 
+				document.getElementById("row_"+row+"_column_"+column).innerHTML = "<div onclick='reveal("+row+", "+column+")' class='cover'></div>";
+			}else if(flags_on){
+				current_tile.flagged = true; 
+				document.getElementById("row_"+row+"_column_"+column).innerHTML = "<div onclick='reveal("+row+", "+column+")' class='flag'></div>";
+			}else{ 
+				if(current_tile.checked == false){
+					if(current_tile.contains == "M"){
+						display_mine(row, column);
+						document.getElementById('message').innerHTML = "BOOM!";
+					}else if(current_tile.contains == ""){    
+						current_tile.checked = true;
+						var surroundings = board.detect_surrounding(current_tile);
+						setTimeout(function() {
+							for(var tile = 0; tile < surroundings.length; tile++){ 
+									reveal(surroundings[tile].y,surroundings[tile].x); 
+							} 
+						}, 100);
+						setTimeout(function(){
+							document.getElementById("row_"+row+"_column_"+column).innerHTML = "<div class='digit'></div>";
+						}, 50)
+						
+					}else{
+						display_sensor(row, column);
+					}
+				} 
+			}	
+		}
+
+		function display_sensor(row, column){
+			document.getElementById("row_"+row+"_column_"+column).innerHTML = "<div class='digit'>"+current_tile.contains+"</div>";
+		}
+		function display_mine(row, column){
+			document.getElementById("row_"+row+"_column_"+column).innerHTML = "<div class='mine'></div>";
+		}
+ 
+		</script> 
+</body>
+</html>
