@@ -28,7 +28,7 @@
 	<script src="js/jquery-2.1.4.js"></script>
 	<script>  
 		var Tile = function (row, column){
-			this.contains = "";
+			this.contains = 0;
 			this.x = column;
 			this.y = row;
 			this.checked = false;
@@ -169,14 +169,23 @@
 				}
 			}
 		}
-
+ 
 		var board = new Board(16, 16, 20); 	 
 		board.add_mines();
 		board.add_sensors(); 
 		var flags_on = false;
 		var current_tile; 
 		var revealed_areas = 0;
-		console.log(board.mine_locations);
+
+		function reset(){
+			document.getElementById('message').innerHTML = "";
+			document.getElementById('table_body').innerHTML = "";  
+			board = new Board(16, 16, 20);  
+			board.add_mines();
+			board.add_sensors(); 
+			flags_on = false;
+			revealed_areas = 0;
+		}
 
 		function flags(){
 			if(flags_on){
@@ -210,19 +219,15 @@
 			}else{ 
 				if(current_tile.checked == false){
 					if(current_tile.contains == "M"){
-						display_mine(row, column);
-						document.getElementById('message').innerHTML = "BOOM!";
-					}else if(current_tile.contains == ""){    
+						lose(current_tile);
+					}else if(current_tile.contains == 0){  
 						current_tile.checked = true;
 						var surroundings = board.detect_surrounding(current_tile);
-						// setTimeout(function() {
-							for(var tile = 0; tile < surroundings.length; tile++){ 
-									reveal(surroundings[tile].y,surroundings[tile].x); 
-							} 
-						// }, 100);
-						// setTimeout(function(){
-							document.getElementById("row_"+row+"_column_"+column).innerHTML = "<div class='digit'></div>";
-						// }, 50);
+				
+						for(var tile = 0; tile < surroundings.length; tile++){ 
+							reveal(surroundings[tile].y,surroundings[tile].x); 
+						}  
+						document.getElementById("row_"+row+"_column_"+column).innerHTML = "<div class='digit'></div>";
 					}else{
 						display_sensor(row, column);
 					}
@@ -247,7 +252,19 @@
 
  		function win(){
  			show_mines();
- 			document.getElementById("message").innerHTML = "You Win!!";
+	 		document.getElementById("message").innerHTML = "You Win!!";
+ 			setTimeout(function(){
+	 			reset();		
+	 		},2500);
+ 		}
+
+ 		function lose(tile){
+ 			display_mine(tile.y, tile.x);
+ 			show_mines();
+			document.getElementById('message').innerHTML = "BOOM!";
+ 			setTimeout(function(){
+ 				reset();	
+ 			},1500);
  		}
 
  		function show_mines(){
