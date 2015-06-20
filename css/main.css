@@ -21,6 +21,18 @@ footer h5{
 	float: right;
 	margin-right: 20px;
 }
+.ui_panel{ 
+	width: 100%;
+}
+.ui_panel li{
+	display: inline-block;
+	width: 30%;  
+	text-align: center;
+	border: 1px solid #222;
+}
+.ui_bottom li{
+	list-style: none;
+} 
 .flag_button{
 	width: 80px;
 	text-align: center;

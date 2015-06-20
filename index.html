@@ -10,12 +10,17 @@
 		<h1>Mine Sweeper</h1>
 	</header> 
 	<main class="row">
-		<div class="col-lg-2 col-md-2 col-sm-12 col-xs-12">
-			<div id="message"></div>
-			<div onclick="flags()" class="flag_button">Flags</div>
-			<span id="flag_count"></span>
-		</div>
+		<div class="col-lg-2 col-md-2 col-sm-12 col-xs-12"></div>
 		<div class="col-lg-8 col-md-8 col-sm-12 col-xs-12">
+			<ul class="ui_panel">
+				<li id="flag_count"></li>
+				<li id="smiley_face" onclick="reset()"></li>
+				<li id="timer"></li>
+			</ul>
+			<ul class="ui_bottom">
+				<li id="message"></li>
+				<li onclick="flags()" class="flag_button">Mode</li>
+			</ul>
 			<table>
 				<thead></thead>
 				<tbody id="table_body"> 
@@ -58,6 +63,11 @@
 			} 
 			document.getElementById('flag_count').innerHTML = this.flags;
 		}  
+
+		Board.prototype.setup = function(){
+			this.add_mines();
+			this.add_sensors();
+		}
 
 		Board.prototype.place_mine = function(){
 			var mine_location = this.grid[Math.floor(Math.random()*this.max_rows)][Math.floor(Math.random()*this.max_columns)]; 
@@ -170,34 +180,50 @@
 			}
 		}
  
-		var board = new Board(16, 16, 20); 	 
-		board.add_mines();
-		board.add_sensors(); 
+		var board = new Board(16, 16, 40); 	 
 		var flags_on = false;
 		var current_tile; 
 		var revealed_areas = 0;
+		var first_click = false;
+		var time = 0;
+		var clock;
+		document.getElementById("timer").innerHTML = time;
+		document.getElementById('smiley_face').innerHTML = ":)";
+		document.getElementById('message').innerHTML = "normal mode";  	
 
 		function reset(){
-			document.getElementById('message').innerHTML = "";
+			clearInterval(clock);
+			document.getElementById('message').innerHTML = "normal mode";  
+			document.getElementById('smiley_face').innerHTML = ":)";
 			document.getElementById('table_body').innerHTML = "";  
-			board = new Board(16, 16, 20);  
-			board.add_mines();
-			board.add_sensors(); 
+			board = new Board(16, 16, 40);  
 			flags_on = false;
 			revealed_areas = 0;
+			first_click = false;
+			time = 0;
+			document.getElementById("timer").innerHTML = time;
 		}
 
 		function flags(){
 			if(flags_on){
 				flags_on = false;
-				document.getElementById('message').innerHTML = "flags off";  
+				document.getElementById('message').innerHTML = "normal mode";  
 			}else{
 				flags_on = true;
-				document.getElementById('message').innerHTML = "flags on";
+				document.getElementById('message').innerHTML = "flagging mode";
 			}	 
 		}
 
 		function reveal(row, column){
+			if(!first_click){
+				first_click = true;
+				board.setup(); 
+				clock = setInterval(function(){
+					time++;
+					document.getElementById("timer").innerHTML = time;
+				}, 1000);
+			}
+
 			current_tile = board.grid[row][column];
 			if(current_tile.contains != "M" && !current_tile.cleared){
 				revealed_areas++;
@@ -252,19 +278,16 @@
 
  		function win(){
  			show_mines();
-	 		document.getElementById("message").innerHTML = "You Win!!";
- 			setTimeout(function(){
-	 			reset();		
-	 		},2500);
+	 		document.getElementById("smiley_face").innerHTML = ":D";
  		}
 
  		function lose(tile){
  			display_mine(tile.y, tile.x);
  			show_mines();
-			document.getElementById('message').innerHTML = "BOOM!";
+			document.getElementById('smiley_face').innerHTML = ":(";
  			setTimeout(function(){
  				reset();	
- 			},1500);
+ 			},2500);
  		}
 
  		function show_mines(){
@@ -272,8 +295,6 @@
  				display_mine(board.mine_locations[i].y, board.mine_locations[i].x);
  			}
  		}
-
- 		 
 	</script> 
 </body>
 </html>
